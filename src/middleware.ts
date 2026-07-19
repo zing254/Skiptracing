@@ -1,29 +1,23 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/lib/auth";
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
-  const isLoggedIn = !!token;
-  const role = (token?.role as string) ?? "";
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+  const session = req.auth;
+  const isLoggedIn = !!session;
+  const role = (session?.user as unknown as { role: string })?.role ?? "";
 
   // Public routes
   if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname === "/api/health") {
     if (isLoggedIn && pathname === "/login") {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();
   }
 
   // Protected routes
   if (!isLoggedIn) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -46,11 +40,11 @@ export async function middleware(request: NextRequest) {
 
   // App route protection
   if (pathname.startsWith("/admin") && role !== "system_admin") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
