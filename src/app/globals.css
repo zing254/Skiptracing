@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --sidebar-width: 260px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #0f1117;
+    color: #e2e8f0;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1a1f2e;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+  }
+
+  .glass-hover {
+    transition: all 0.2s ease;
+  }
+
+  .glass-hover:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .status-pending {
+    @apply bg-amber-500/15 text-amber-400 border border-amber-500/25;
+  }
+
+  .status-in_progress {
+    @apply bg-blue-500/15 text-blue-400 border border-blue-500/25;
+  }
+
+  .status-located {
+    @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/25;
+  }
+
+  .status-unresolved {
+    @apply bg-red-500/15 text-red-400 border border-red-500/25;
+  }
+
+  .status-closed {
+    @apply bg-slate-500/15 text-slate-400 border border-slate-500/25;
+  }
+
+  .flag-bankruptcy {
+    @apply bg-red-500/15 text-red-400 border border-red-500/30;
+  }
+
+  .flag-deceased {
+    @apply bg-slate-500/15 text-slate-300 border border-slate-500/30;
+  }
+
+  .flag-attorney_rep {
+    @apply bg-purple-500/15 text-purple-400 border border-purple-500/30;
+  }
+
+  .flag-do_not_contact {
+    @apply bg-orange-500/15 text-orange-400 border border-orange-500/30;
+  }
+
+  .flag-minor {
+    @apply bg-yellow-500/15 text-yellow-400 border border-yellow-500/30;
+  }
+
+  .confidence-high {
+    @apply text-emerald-400;
+  }
+
+  .confidence-med {
+    @apply text-amber-400;
+  }
+
+  .confidence-low {
+    @apply text-red-400;
+  }
+}
