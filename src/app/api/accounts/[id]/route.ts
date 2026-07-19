@@ -54,6 +54,7 @@ export async function GET(
         debtorDob: debtors.dob,
         debtorGender: debtors.gender,
         debtorSsnLast4: debtors.ssnLast4,
+        debtorSsnEncrypted: debtors.ssnEncrypted,
         agentId: users.id,
         agentFirstName: users.firstName,
         agentLastName: users.lastName,

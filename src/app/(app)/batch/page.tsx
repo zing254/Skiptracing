@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { parseBatchCsv } from "@/lib/batch/csv-parser";
 import {
   Upload,
   Play,
@@ -212,7 +213,9 @@ export default function BatchPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [uploadFile, setUploadFile] = useState<string>("");
+  const [uploadFileObj, setUploadFileObj] = useState<File | null>(null);
   const [recordCount, setRecordCount] = useState(500);
+  const [csvPreview, setCsvPreview] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -256,6 +259,8 @@ export default function BatchPage() {
       });
       setShowUpload(false);
       setUploadFile("");
+      setUploadFileObj(null);
+      setCsvPreview([]);
       await fetchJobs();
     } finally {
       setSubmitting(false);
@@ -336,7 +341,20 @@ export default function BatchPage() {
               e.preventDefault();
               setDragOver(false);
               const file = e.dataTransfer.files[0];
-              if (file) setUploadFile(file.name);
+              if (file) {
+                setUploadFileObj(file);
+                setUploadFile(file.name);
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const text = ev.target?.result as string;
+                  const { rows, errors } = parseBatchCsv(text);
+                  setRecordCount(rows.length);
+                  setCsvPreview(errors.length > 0
+                    ? [`${rows.length} valid, ${errors.length} errors (first: row ${errors[0].row})`]
+                    : [`${rows.length} rows parsed`, ...rows.slice(0, 3).map((r) => `  ${r.firstName} ${r.lastName} — ${r.accountNumber}`)]);
+                };
+                reader.readAsText(file);
+              }
             }}
           >
             {uploadFile ? (
@@ -347,7 +365,7 @@ export default function BatchPage() {
                   <div className="text-xs text-slate-500">File selected</div>
                 </div>
                 <button
-                  onClick={() => setUploadFile("")}
+                  onClick={() => { setUploadFile(""); setUploadFileObj(null); setCsvPreview([]); }}
                   className="text-slate-500 hover:text-white ml-4"
                 >
                   <XCircle className="w-4 h-4" />
@@ -366,7 +384,20 @@ export default function BatchPage() {
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) setUploadFile(file.name);
+                        if (file) {
+                          setUploadFileObj(file);
+                          setUploadFile(file.name);
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const text = ev.target?.result as string;
+                            const { rows, errors } = parseBatchCsv(text);
+                            setRecordCount(rows.length);
+                            setCsvPreview(errors.length > 0
+                              ? [`${rows.length} valid, ${errors.length} errors (first: row ${errors[0].row})`]
+                              : [`${rows.length} rows parsed`, ...rows.slice(0, 3).map((r) => `  ${r.firstName} ${r.lastName} — ${r.accountNumber}`)]);
+                          };
+                          reader.readAsText(file);
+                        }
                       }}
                     />
                   </label>
@@ -377,6 +408,17 @@ export default function BatchPage() {
               </>
             )}
           </div>
+
+          {uploadFile && (
+            <div className="p-3 rounded-xl bg-white/3 border border-white/6 mb-4">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">CSV Preview</div>
+              <div className="space-y-0.5">
+                {csvPreview.map((line, i) => (
+                  <div key={i} className="text-[11px] text-slate-400 font-mono">{line}</div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 mb-4">
             <div className="flex-1">

@@ -25,6 +25,7 @@ import {
   Download,
 } from "lucide-react";
 import { StatusBadge, FlagBadge, ConfidenceBadge } from "@/components/StatusBadge";
+import { decrypt } from "@/lib/crypto";
 import { clsx } from "clsx";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ type AccountDetail = {
     debtorDob: string | null;
     debtorGender: string | null;
     debtorSsnLast4: string | null;
+    debtorSsnEncrypted: string | null;
     agentId: string | null;
     agentFirstName: string | null;
     agentLastName: string | null;
@@ -522,6 +524,7 @@ export default function AccountDetailPage({
   const [data, setData] = useState<AccountDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"contacts" | "network" | "audit" | "results">("contacts");
+  const [showSsn, setShowSsn] = useState(false);
 
   const fetchData = useCallback(async () => {
     const res = await fetch(`/api/accounts/${id}`);
@@ -586,16 +589,27 @@ export default function AccountDetailPage({
             <span>·</span>
             <span>{account.bankName}</span>
             <span>·</span>
-            <span className="text-emerald-400 font-bold">
+                <span className="text-emerald-400 font-bold">
               ${parseFloat(account.balance).toLocaleString()}
             </span>
             {account.debtorSsnLast4 && (
               <>
                 <span>·</span>
-                <span className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    if (account.debtorSsnEncrypted && showSsn) {
+                      setShowSsn(false);
+                    } else {
+                      setShowSsn(true);
+                    }
+                  }}
+                  className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                >
                   <Lock className="w-3 h-3" />
-                  SSN: ***-**-{account.debtorSsnLast4}
-                </span>
+                  {showSsn && account.debtorSsnEncrypted
+                    ? (() => { try { return `SSN: ${decrypt(account.debtorSsnEncrypted)}`; } catch { return `SSN: ***-**-${account.debtorSsnLast4}`; } })()
+                    : `SSN: ***-**-${account.debtorSsnLast4}`}
+                </button>
               </>
             )}
           </div>
@@ -636,7 +650,9 @@ export default function AccountDetailPage({
                 ["Full Name", `${account.debtorFirstName} ${account.debtorMiddleName ?? ""} ${account.debtorLastName}`.trim()],
                 ["Date of Birth", account.debtorDob ?? "N/A"],
                 ["Gender", account.debtorGender ?? "N/A"],
-                ["SSN (masked)", account.debtorSsnLast4 ? `***-**-${account.debtorSsnLast4}` : "N/A"],
+                ["SSN", showSsn && account.debtorSsnEncrypted
+                  ? (() => { try { return decrypt(account.debtorSsnEncrypted); } catch { return `***-**-${account.debtorSsnLast4}`; } })()
+                  : account.debtorSsnLast4 ? `***-**-${account.debtorSsnLast4}` : "N/A"],
                 ["AKAs / Aliases", account.debtorAliases ?? "None on file"],
                 ["Balance", `$${parseFloat(account.balance).toLocaleString()}`],
                 ["Charge-Off Date", account.chargeOffDate ?? "N/A"],

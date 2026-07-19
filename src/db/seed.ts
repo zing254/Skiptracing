@@ -16,6 +16,7 @@ import {
 } from "./schema";
 
 import { hash } from "bcryptjs";
+import { encrypt } from "../lib/crypto";
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -107,18 +108,18 @@ async function seed() {
   ] = await db
     .insert(debtors)
     .values([
-      { firstName: "John", lastName: "Smith", middleName: "Allen", ssnLast4: "4521", dob: "1978-03-12", gender: "M", aliases: "J. Smith, Johnny Smith" },
-      { firstName: "Mary", lastName: "Jones", ssnLast4: "8834", dob: "1985-07-22", gender: "F" },
-      { firstName: "Robert", lastName: "Williams", middleName: "Lee", ssnLast4: "2291", dob: "1971-11-05", gender: "M" },
-      { firstName: "Patricia", lastName: "Brown", ssnLast4: "6612", dob: "1990-04-18", gender: "F", aliases: "Pat Brown, Patty Brown" },
-      { firstName: "Michael", lastName: "Davis", ssnLast4: "3347", dob: "1983-09-30", gender: "M" },
-      { firstName: "Linda", lastName: "Miller", ssnLast4: "9921", dob: "1968-01-14", gender: "F" },
-      { firstName: "James", lastName: "Wilson", ssnLast4: "7756", dob: "1995-06-07", gender: "M" },
-      { firstName: "Barbara", lastName: "Moore", ssnLast4: "4438", dob: "1962-12-25", gender: "F" },
-      { firstName: "William", lastName: "Taylor", ssnLast4: "5519", dob: "1979-08-17", gender: "M" },
-      { firstName: "Elizabeth", lastName: "Anderson", ssnLast4: "1123", dob: "1988-02-28", gender: "F" },
-      { firstName: "Carlos", lastName: "Martinez", ssnLast4: "8874", dob: "1976-10-11", gender: "M", aliases: "Carl Martinez" },
-      { firstName: "Susan", lastName: "Thompson", ssnLast4: "3365", dob: "1993-05-03", gender: "F" },
+      { firstName: "John", lastName: "Smith", middleName: "Allen", ssnLast4: "4521", ssnEncrypted: encrypt("123-45-4521"), dob: "1978-03-12", gender: "M", aliases: "J. Smith, Johnny Smith" },
+      { firstName: "Mary", lastName: "Jones", ssnLast4: "8834", ssnEncrypted: encrypt("987-65-8834"), dob: "1985-07-22", gender: "F" },
+      { firstName: "Robert", lastName: "Williams", middleName: "Lee", ssnLast4: "2291", ssnEncrypted: encrypt("456-78-2291"), dob: "1971-11-05", gender: "M" },
+      { firstName: "Patricia", lastName: "Brown", ssnLast4: "6612", ssnEncrypted: encrypt("321-54-6612"), dob: "1990-04-18", gender: "F", aliases: "Pat Brown, Patty Brown" },
+      { firstName: "Michael", lastName: "Davis", ssnLast4: "3347", ssnEncrypted: encrypt("654-32-3347"), dob: "1983-09-30", gender: "M" },
+      { firstName: "Linda", lastName: "Miller", ssnLast4: "9921", ssnEncrypted: encrypt("111-22-9921"), dob: "1968-01-14", gender: "F" },
+      { firstName: "James", lastName: "Wilson", ssnLast4: "7756", ssnEncrypted: encrypt("222-33-7756"), dob: "1995-06-07", gender: "M" },
+      { firstName: "Barbara", lastName: "Moore", ssnLast4: "4438", ssnEncrypted: encrypt("333-44-4438"), dob: "1962-12-25", gender: "F" },
+      { firstName: "William", lastName: "Taylor", ssnLast4: "5519", ssnEncrypted: encrypt("444-55-5519"), dob: "1979-08-17", gender: "M" },
+      { firstName: "Elizabeth", lastName: "Anderson", ssnLast4: "1123", ssnEncrypted: encrypt("555-66-1123"), dob: "1988-02-28", gender: "F" },
+      { firstName: "Carlos", lastName: "Martinez", ssnLast4: "8874", ssnEncrypted: encrypt("666-77-8874"), dob: "1976-10-11", gender: "M", aliases: "Carl Martinez" },
+      { firstName: "Susan", lastName: "Thompson", ssnLast4: "3365", ssnEncrypted: encrypt("777-88-3365"), dob: "1993-05-03", gender: "F" },
     ])
     .returning();
 
