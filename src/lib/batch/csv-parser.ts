@@ -1,15 +1,5 @@
-import { z } from "zod";
-
-export const csvRowSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  ssnLast4: z.string().length(4).optional(),
-  dob: z.string().optional(),
-  accountNumber: z.string().min(1),
-  balance: z.coerce.number().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-});
+import { csvRowSchema } from "../validation";
+import type { z } from "zod";
 
 export type CsvRow = z.infer<typeof csvRowSchema>;
 

@@ -216,6 +216,7 @@ export default function BatchPage() {
   const [uploadFileObj, setUploadFileObj] = useState<File | null>(null);
   const [recordCount, setRecordCount] = useState(500);
   const [csvPreview, setCsvPreview] = useState<string[]>([]);
+  const [parsedRows, setParsedRows] = useState<Array<{ firstName: string; lastName: string; ssnLast4?: string; dob?: string; accountNumber: string; balance?: number; phone?: string; address?: string }>>([]);
   const [submitting, setSubmitting] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -255,12 +256,14 @@ export default function BatchPage() {
           submittedBy: mgr?.id,
           fileName: uploadFile || `batch_${Date.now()}.csv`,
           totalRecords: recordCount,
+          rows: parsedRows.length > 0 ? parsedRows : undefined,
         }),
       });
       setShowUpload(false);
       setUploadFile("");
       setUploadFileObj(null);
       setCsvPreview([]);
+      setParsedRows([]);
       await fetchJobs();
     } finally {
       setSubmitting(false);
@@ -349,6 +352,7 @@ export default function BatchPage() {
                   const text = ev.target?.result as string;
                   const { rows, errors } = parseBatchCsv(text);
                   setRecordCount(rows.length);
+                  setParsedRows(rows);
                   setCsvPreview(errors.length > 0
                     ? [`${rows.length} valid, ${errors.length} errors (first: row ${errors[0].row})`]
                     : [`${rows.length} rows parsed`, ...rows.slice(0, 3).map((r) => `  ${r.firstName} ${r.lastName} — ${r.accountNumber}`)]);
@@ -392,6 +396,7 @@ export default function BatchPage() {
                             const text = ev.target?.result as string;
                             const { rows, errors } = parseBatchCsv(text);
                             setRecordCount(rows.length);
+                            setParsedRows(rows);
                             setCsvPreview(errors.length > 0
                               ? [`${rows.length} valid, ${errors.length} errors (first: row ${errors[0].row})`]
                               : [`${rows.length} rows parsed`, ...rows.slice(0, 3).map((r) => `  ${r.firstName} ${r.lastName} — ${r.accountNumber}`)]);

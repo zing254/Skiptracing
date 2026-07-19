@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { batchJobs, bankClients, users } from "@/db/schema";
+import { batchJobs, bankClients, users, debtors, accounts } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { getSessionUser, canManageBatches } from "@/lib/rbac";
 import { batchCreateSchema } from "@/lib/validation";
 import { processBatch } from "@/lib/batch/orchestrator";
+import { encrypt } from "@/lib/crypto";
 import { logger } from "@/lib/logger";
 
 export async function GET(_req: NextRequest) {
@@ -55,7 +56,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { bankClientId, submittedBy, fileName, totalRecords } = parsed.data;
+    const { bankClientId, submittedBy, fileName, totalRecords, rows } = parsed.data;
+
+    // If CSV rows are provided, create debtor + account records
+    let recordCount = totalRecords ?? 0;
+    if (rows && rows.length > 0) {
+      for (const row of rows) {
+        const [debtor] = await db
+          .insert(debtors)
+          .values({
+            firstName: row.firstName,
+            lastName: row.lastName,
+            ssnLast4: row.ssnLast4 ?? null,
+            ssnEncrypted: row.ssnLast4 ? encrypt(`XXX-XX-${row.ssnLast4}`) : null,
+            dob: row.dob ?? null,
+          })
+          .returning();
+
+        await db.insert(accounts).values({
+          bankClientId,
+          debtorId: debtor.id,
+          accountNumber: row.accountNumber,
+          balance: String(row.balance ?? 0),
+          skipTraceStatus: "pending",
+        });
+      }
+      recordCount = rows.length;
+    }
 
     const [job] = await db
       .insert(batchJobs)
@@ -64,7 +91,7 @@ export async function POST(req: NextRequest) {
         submittedBy,
         fileName: fileName ?? `batch_${Date.now()}.csv`,
         status: "queued",
-        totalRecords: totalRecords ?? 0,
+        totalRecords: recordCount,
       })
       .returning();
 

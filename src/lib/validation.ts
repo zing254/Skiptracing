@@ -13,11 +13,23 @@ export const accountQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional().default(20),
 });
 
+export const csvRowSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  ssnLast4: z.string().length(4).optional(),
+  dob: z.string().optional(),
+  accountNumber: z.string().min(1),
+  balance: z.coerce.number().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+
 export const batchCreateSchema = z.object({
   bankClientId: z.string().uuid(),
   submittedBy: z.string().uuid(),
   fileName: z.string().optional(),
   totalRecords: z.number().int().positive().optional().default(500),
+  rows: z.array(csvRowSchema).optional(),
 });
 
 export const complianceResolveSchema = z.object({
