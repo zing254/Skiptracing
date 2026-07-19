@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchSchema, addToSystemSchema } from "@/lib/validation";
+import { searchSchema } from "@/lib/validation";
 import { getSessionUser } from "@/lib/rbac";
 import { WaterfallEngine } from "@/lib/providers/waterfall";
+import { FastPeopleSearchProvider } from "@/lib/providers/fastpeoplesearch";
+import { TruePeopleSearchProvider } from "@/lib/providers/truepeoplesearch";
+import { ZabaSearchProvider } from "@/lib/providers/zabasearch";
 import { LexisNexisProvider } from "@/lib/providers/lexisnexis";
 import { TransUnionProvider } from "@/lib/providers/transunion";
 import { ExperianProvider } from "@/lib/providers/experian";
 import { UspsNcoaProvider } from "@/lib/providers/usps-ncoa";
-import { db } from "@/db";
-import { debtors, accounts, contactRecords, skipTraceResults } from "@/db/schema";
-import { eq, and, ilike, or } from "drizzle-orm";
 
 const engine = new WaterfallEngine([
+  new FastPeopleSearchProvider(),
+  new TruePeopleSearchProvider(),
+  new ZabaSearchProvider(),
   new LexisNexisProvider(),
   new TransUnionProvider(),
   new ExperianProvider(),

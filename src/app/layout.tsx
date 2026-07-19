@@ -3,8 +3,8 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  title: "SkipTrace Pro — Bank Debt Collection",
-  description: "Professional skip tracing tool for bank-facing debt collection operations",
+  title: "Northern Auctioneers PRO",
+  description: "Professional skip tracing tool for auctioneers and debt recovery operations",
 };
 
 export default function RootLayout({

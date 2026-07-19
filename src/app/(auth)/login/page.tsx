@@ -39,8 +39,8 @@ function LoginForm() {
           <Zap className="w-5 h-5 text-white" />
         </div>
         <div>
-          <div className="text-lg font-bold text-white">SkipTrace Pro</div>
-          <div className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Debt Recovery</div>
+          <div className="text-lg font-bold text-white">Northern Auctioneers PRO</div>
+          <div className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Skip Tracing</div>
         </div>
       </div>
 

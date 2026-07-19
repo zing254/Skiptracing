@@ -2,7 +2,7 @@ import { SkipTraceProvider, ProviderResult, SearchInput } from "./types";
 
 export class LexisNexisProvider implements SkipTraceProvider {
   name = "LexisNexis Accurint";
-  priority = 10;
+  priority = 20;
 
   async search(input: SearchInput): Promise<ProviderResult> {
     const apiKey = process.env.LEXISNEXIS_API_KEY;

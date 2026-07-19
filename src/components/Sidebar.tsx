@@ -83,10 +83,10 @@ export default function Sidebar() {
           </div>
           <div>
             <div className="text-sm font-bold text-white tracking-wide">
-              SkipTrace Pro
+              Northern Auctioneers PRO
             </div>
             <div className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">
-              Debt Recovery
+              Skip Tracing
             </div>
           </div>
         </div>

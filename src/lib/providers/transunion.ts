@@ -2,7 +2,7 @@ import { SkipTraceProvider, ProviderResult, SearchInput } from "./types";
 
 export class TransUnionProvider implements SkipTraceProvider {
   name = "TransUnion TLO";
-  priority = 20;
+  priority = 25;
 
   async search(input: SearchInput): Promise<ProviderResult> {
     const clientId = process.env.TRANSUNION_CLIENT_ID;
