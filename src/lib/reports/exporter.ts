@@ -1,11 +1,23 @@
 import { db } from "@/db";
 import { accounts, debtors, bankClients } from "@/db/schema";
 import { eq, ilike, or, and } from "drizzle-orm";
+import { skipTraceStatusEnum } from "@/db/schema";
+
+type SkipTraceStatus = (typeof skipTraceStatusEnum.enumValues)[number];
+
+function escapeCsvField(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  const str = String(value);
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
 
 export async function exportAccountsCsv(filters?: { status?: string; search?: string }): Promise<string> {
   const conditions = [];
   if (filters?.status && filters.status !== "all") {
-    conditions.push(eq(accounts.skipTraceStatus, filters.status as any));
+    conditions.push(eq(accounts.skipTraceStatus, filters.status as SkipTraceStatus));
   }
   if (filters?.search) {
     conditions.push(
@@ -35,7 +47,17 @@ export async function exportAccountsCsv(filters?: { status?: string; search?: st
 
   const header = "Account Number,Balance,Status,First Name,Last Name,DOB,SSN (Last 4),Bank\n";
   const csvRows = rows.map(
-    (r) => `${r.accountNumber},${r.balance},${r.status},${r.firstName},${r.lastName},${r.dob ?? ""},${r.ssnLast4 ?? ""},${r.bankName ?? ""}`
+    (r) =>
+      [
+        escapeCsvField(r.accountNumber),
+        escapeCsvField(r.balance),
+        escapeCsvField(r.status),
+        escapeCsvField(r.firstName),
+        escapeCsvField(r.lastName),
+        escapeCsvField(r.dob),
+        escapeCsvField(r.ssnLast4),
+        escapeCsvField(r.bankName),
+      ].join(",")
   );
 
   return header + csvRows.join("\n");

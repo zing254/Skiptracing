@@ -7,9 +7,14 @@ import {
   bankClients,
 } from "@/db/schema";
 import { eq, desc, sql, and } from "drizzle-orm";
+import { getSessionUser, canViewCompliance } from "@/lib/rbac";
+import { logger } from "@/lib/logger";
 
 export async function GET(_req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canViewCompliance(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const flags = await db
       .select({
         id: complianceFlags.id,
@@ -45,7 +50,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({ flags, typeCounts });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to fetch compliance flags", { error: String(err) });
     return NextResponse.json({ error: "Failed to fetch compliance flags" }, { status: 500 });
   }
 }

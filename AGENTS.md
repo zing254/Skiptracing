@@ -35,7 +35,7 @@ Missing any of these crashes the build. SMTP and provider API keys are optional.
 
 ## Auth
 - NextAuth credentials provider in `src/lib/auth.ts`; handler at `src/app/api/auth/[...nextauth]/route.ts`
-- Middleware at `src/middleware.ts` — protects all routes except `/login` and `/api/auth`
+- Proxy at `src/proxy.ts` — protects all routes except `/login` and `/api/auth`
 - Session: JWT strategy, user `role` stored in token
 - RBAC helpers in `src/lib/rbac.ts` — use `getSessionUser()`, `canRunTraces()`, etc.
 - Login: `/login` with `useSearchParams` — wrapped in Suspense boundary

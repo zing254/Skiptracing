@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { accounts, complianceFlags, batchJobs, kpiSnapshots, users } from "@/db/schema";
 import { eq, count, sql, desc, and, gte } from "drizzle-orm";
+import { getSessionUser } from "@/lib/rbac";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     // Status counts
     const statusCounts = await db
       .select({
@@ -82,7 +86,7 @@ export async function GET() {
       topAgents,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to load dashboard", { error: String(err) });
     return NextResponse.json({ error: "Failed to load dashboard" }, { status: 500 });
   }
 }

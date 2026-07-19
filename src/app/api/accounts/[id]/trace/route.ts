@@ -11,10 +11,11 @@ import { ExperianProvider } from "@/lib/providers/experian";
 import { UspsNcoaProvider } from "@/lib/providers/usps-ncoa";
 import { detectFlags } from "@/lib/compliance/engine";
 import { sendComplianceAlert } from "@/lib/compliance/alerts";
-import { encrypt } from "@/lib/crypto";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
+
+const RETRACE_INTERVAL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const requestId = crypto.randomUUID();
@@ -130,14 +131,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .set({
         skipTraceStatus: newStatus,
         lastTraceDate: new Date(),
-        nextRetraceDue: finalScore < 0.8 ? new Date(Date.now() + 90 * 86400000) : null,
+        nextRetraceDue: finalScore < 0.8 ? new Date(Date.now() + RETRACE_INTERVAL_MS) : null,
         updatedAt: new Date(),
       })
       .where(eq(accounts.id, id));
 
     logger.info("Trace completed", { requestId, userId: user.id, accountId: id, finalScore, sources: sourcesQueried.length });
 
-    return NextResponse.json({ success: true, finalScore, resultStatus, newAccountStatus: newStatus, sourcesQueried });
+    const response = NextResponse.json({ success: true, finalScore, resultStatus, newAccountStatus: newStatus, sourcesQueried });
+    response.headers.set("X-RateLimit-Remaining", String(rl.remaining));
+    response.headers.set("X-RateLimit-Reset", String(rl.resetAt));
+    return response;
   } catch (err) {
     logger.error("Trace failed", { requestId, error: String(err) });
     return NextResponse.json({ error: "Trace failed" }, { status: 500 });

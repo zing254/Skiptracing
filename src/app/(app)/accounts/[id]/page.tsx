@@ -522,8 +522,6 @@ export default function AccountDetailPage({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"contacts" | "network" | "audit" | "results">("contacts");
 
-  const DEMO_AGENT_ID = ""; // will be filled after we fetch users
-
   const fetchData = useCallback(async () => {
     const res = await fetch(`/api/accounts/${id}`);
     if (!res.ok) {

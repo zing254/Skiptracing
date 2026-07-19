@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { batchJobs, bankClients, users } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
+import { getSessionUser, canManageBatches } from "@/lib/rbac";
+import { batchCreateSchema } from "@/lib/validation";
+import { processBatch } from "@/lib/batch/orchestrator";
+import { logger } from "@/lib/logger";
 
 export async function GET(_req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageBatches(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const jobs = await db
       .select({
         id: batchJobs.id,
@@ -31,15 +38,24 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({ jobs });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to fetch batch jobs", { error: String(err) });
     return NextResponse.json({ error: "Failed to fetch batch jobs" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canManageBatches(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     const body = await req.json();
-    const { bankClientId, submittedBy, fileName, totalRecords } = body;
+    const parsed = batchCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const { bankClientId, submittedBy, fileName, totalRecords } = parsed.data;
 
     const [job] = await db
       .insert(batchJobs)
@@ -52,21 +68,14 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // Simulate async processing start
-    setTimeout(async () => {
-      try {
-        await db
-          .update(batchJobs)
-          .set({ status: "processing", startedAt: new Date() })
-          .where(eq(batchJobs.id, job.id));
-      } catch (_e) {
-        // ignore
-      }
-    }, 2000);
+    // Start batch processing in background
+    processBatch(job.id).catch((err) => {
+      logger.error("Batch processing failed", { batchId: job.id, error: String(err) });
+    });
 
     return NextResponse.json({ job });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to create batch job", { error: String(err) });
     return NextResponse.json({ error: "Failed to create batch job" }, { status: 500 });
   }
 }

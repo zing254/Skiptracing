@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { searchAuditLog, accounts, debtors, users } from "@/db/schema";
 import { eq, desc, ilike, and, gte, lte, sql } from "drizzle-orm";
+import { getSessionUser } from "@/lib/rbac";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { searchParams } = new URL(req.url);
     const agentFilter = searchParams.get("agent");
     const sourceFilter = searchParams.get("source");
@@ -44,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ logs: rows, total: Number(total), page, limit });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to fetch audit log", { error: String(err) });
     return NextResponse.json({ error: "Failed to fetch audit log" }, { status: 500 });
   }
 }

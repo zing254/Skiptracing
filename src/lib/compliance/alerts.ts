@@ -1,5 +1,6 @@
 import { env } from "../env";
 import { logger } from "../logger";
+import nodemailer from "nodemailer";
 
 type AlertPayload = {
   to: string;
@@ -7,21 +8,22 @@ type AlertPayload = {
   text: string;
 };
 
+const transporter = env.smtpHost
+  ? nodemailer.createTransport({
+      host: env.smtpHost,
+      port: env.smtpPort,
+      secure: env.smtpPort === 465,
+      auth: env.smtpUser ? { user: env.smtpUser, pass: env.smtpPass } : undefined,
+    })
+  : null;
+
 export async function sendAlert(payload: AlertPayload): Promise<void> {
-  if (!env.smtpHost) {
+  if (!transporter) {
     logger.warn("SMTP not configured, skipping email alert", { subject: payload.subject });
     return;
   }
 
   try {
-    const nodemailer = await import("nodemailer");
-    const transporter = nodemailer.createTransport({
-      host: env.smtpHost,
-      port: env.smtpPort,
-      secure: env.smtpPort === 465,
-      auth: env.smtpUser ? { user: env.smtpUser, pass: env.smtpPass } : undefined,
-    });
-
     await transporter.sendMail({
       from: env.smtpFrom,
       to: payload.to,

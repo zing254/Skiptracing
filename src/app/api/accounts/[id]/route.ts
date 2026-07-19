@@ -13,12 +13,17 @@ import {
   debtorNetworks,
 } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
+import { getSessionUser } from "@/lib/rbac";
+import { statusUpdateSchema, caseNoteSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
 
     // Main account + debtor info
@@ -134,7 +139,7 @@ export async function GET(
       notes,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to fetch account", { error: String(err) });
     return NextResponse.json({ error: "Failed to fetch account" }, { status: 500 });
   }
 }
@@ -144,28 +149,38 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { id } = await params;
     const body = await req.json();
-    const { status, note, agentId } = body;
 
-    if (status) {
+    if (body.status) {
+      const statusParsed = statusUpdateSchema.safeParse({ status: body.status });
+      if (!statusParsed.success) {
+        return NextResponse.json({ error: "Invalid status", details: statusParsed.error.flatten() }, { status: 400 });
+      }
       await db
         .update(accounts)
-        .set({ skipTraceStatus: status, updatedAt: new Date() })
+        .set({ skipTraceStatus: statusParsed.data.status, updatedAt: new Date() })
         .where(eq(accounts.id, id));
     }
 
-    if (note && agentId) {
+    if (body.note && body.agentId) {
+      const noteParsed = caseNoteSchema.safeParse({ note: body.note, agentId: body.agentId });
+      if (!noteParsed.success) {
+        return NextResponse.json({ error: "Invalid note", details: noteParsed.error.flatten() }, { status: 400 });
+      }
       await db.insert(caseNotes).values({
         accountId: id,
-        agentId,
-        note,
+        agentId: noteParsed.data.agentId,
+        note: noteParsed.data.note,
       });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to update account", { error: String(err) });
     return NextResponse.json({ error: "Failed to update account" }, { status: 500 });
   }
 }

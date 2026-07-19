@@ -8,9 +8,13 @@ import {
   complianceFlags,
 } from "@/db/schema";
 import { eq, ilike, or, and, sql, desc, asc } from "drizzle-orm";
+import { getSessionUser } from "@/lib/rbac";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const search = searchParams.get("search");
@@ -93,7 +97,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ accounts: rows, total: Number(total), page, limit });
   } catch (err) {
-    console.error(err);
+    logger.error("Failed to fetch accounts", { error: String(err) });
     return NextResponse.json({ error: "Failed to fetch accounts" }, { status: 500 });
   }
 }

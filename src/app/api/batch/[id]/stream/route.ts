@@ -15,6 +15,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const abortController = new AbortController();
+  const signal = abortController.signal;
+
+  req.signal.addEventListener("abort", () => {
+    abortController.abort();
+  });
+
   const stream = new ReadableStream({
     async start(controller) {
       const send = (data: object) => {
@@ -22,6 +29,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       };
 
       const poll = async () => {
+        if (signal.aborted) {
+          controller.close();
+          return;
+        }
+
         const [job] = await db.select().from(batchJobs).where(eq(batchJobs.id, id)).limit(1);
         if (!job) {
           send({ error: "Batch not found" });
