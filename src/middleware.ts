@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
   const role = (token?.role as string) ?? "";
 
   // Public routes
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
+  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname === "/api/health") {
     if (isLoggedIn && pathname === "/login") {
       return NextResponse.redirect(new URL("/", request.url));
     }
