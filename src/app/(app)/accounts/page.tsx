@@ -15,6 +15,7 @@ import {
   Calendar,
   DollarSign,
   SortAsc,
+  UserPlus,
 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { clsx } from "clsx";
@@ -110,6 +111,13 @@ function AccountsInner() {
             {total.toLocaleString()} accounts in system
           </p>
         </div>
+        <Link
+          href="/search"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 transition-colors text-sm font-semibold text-white"
+        >
+          <UserPlus className="w-4 h-4" />
+          Search New Person
+        </Link>
       </div>
 
       {/* Filters */}

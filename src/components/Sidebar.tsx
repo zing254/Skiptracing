@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ChevronRight,
   Zap,
+  UserSearch,
 } from "lucide-react";
 import { clsx } from "clsx";
 import UserMenu from "@/components/auth/UserMenu";
@@ -28,6 +29,12 @@ const navItems = [
     href: "/accounts",
     icon: Layers,
     description: "All accounts",
+  },
+  {
+    label: "Skip Trace Search",
+    href: "/search",
+    icon: UserSearch,
+    description: "Search new people",
   },
   {
     label: "Batch Processing",

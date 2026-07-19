@@ -25,7 +25,7 @@ import {
   Download,
 } from "lucide-react";
 import { StatusBadge, FlagBadge, ConfidenceBadge } from "@/components/StatusBadge";
-import { decrypt } from "@/lib/crypto";
+import { decryptSsnAction } from "@/lib/actions/decrypt";
 import { clsx } from "clsx";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -525,6 +525,8 @@ export default function AccountDetailPage({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"contacts" | "network" | "audit" | "results">("contacts");
   const [showSsn, setShowSsn] = useState(false);
+  const [decryptedSsn, setDecryptedSsn] = useState<string | null>(null);
+  const [decryptingSsn, setDecryptingSsn] = useState(false);
 
   const fetchData = useCallback(async () => {
     const res = await fetch(`/api/accounts/${id}`);
@@ -536,6 +538,25 @@ export default function AccountDetailPage({
     setData(json);
     setLoading(false);
   }, [id, router]);
+
+  const toggleSsn = useCallback(async () => {
+    if (showSsn) {
+      setShowSsn(false);
+      setDecryptedSsn(null);
+      return;
+    }
+    if (!data?.account.debtorSsnEncrypted) return;
+    setDecryptingSsn(true);
+    try {
+      const result = await decryptSsnAction(data.account.debtorSsnEncrypted);
+      setDecryptedSsn(result === "DECRYPTION_FAILED" ? null : result);
+      setShowSsn(true);
+    } catch {
+      setShowSsn(true);
+    } finally {
+      setDecryptingSsn(false);
+    }
+  }, [showSsn, data]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -596,19 +617,18 @@ export default function AccountDetailPage({
               <>
                 <span>·</span>
                 <button
-                  onClick={() => {
-                    if (account.debtorSsnEncrypted && showSsn) {
-                      setShowSsn(false);
-                    } else {
-                      setShowSsn(true);
-                    }
-                  }}
-                  className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                  onClick={toggleSsn}
+                  disabled={decryptingSsn}
+                  className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <Lock className="w-3 h-3" />
-                  {showSsn && account.debtorSsnEncrypted
-                    ? (() => { try { return `SSN: ${decrypt(account.debtorSsnEncrypted)}`; } catch { return `SSN: ***-**-${account.debtorSsnLast4}`; } })()
-                    : `SSN: ***-**-${account.debtorSsnLast4}`}
+                  {decryptingSsn
+                    ? "Decrypting..."
+                    : showSsn && decryptedSsn
+                      ? `SSN: ${decryptedSsn}`
+                      : showSsn && !decryptedSsn
+                        ? `SSN: ***-**-${account.debtorSsnLast4}`
+                        : `SSN: ***-**-${account.debtorSsnLast4}`}
                 </button>
               </>
             )}
@@ -650,8 +670,8 @@ export default function AccountDetailPage({
                 ["Full Name", `${account.debtorFirstName} ${account.debtorMiddleName ?? ""} ${account.debtorLastName}`.trim()],
                 ["Date of Birth", account.debtorDob ?? "N/A"],
                 ["Gender", account.debtorGender ?? "N/A"],
-                ["SSN", showSsn && account.debtorSsnEncrypted
-                  ? (() => { try { return decrypt(account.debtorSsnEncrypted); } catch { return `***-**-${account.debtorSsnLast4}`; } })()
+                ["SSN", showSsn && decryptedSsn
+                  ? decryptedSsn
                   : account.debtorSsnLast4 ? `***-**-${account.debtorSsnLast4}` : "N/A"],
                 ["AKAs / Aliases", account.debtorAliases ?? "None on file"],
                 ["Balance", `$${parseFloat(account.balance).toLocaleString()}`],

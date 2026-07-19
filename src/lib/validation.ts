@@ -45,3 +45,28 @@ export const caseNoteSchema = z.object({
 export const statusUpdateSchema = z.object({
   status: z.enum(["pending", "in_progress", "located", "unresolved", "closed"]),
 });
+
+export const searchSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  middleName: z.string().optional(),
+  ssnLast4: z.string().length(4).optional(),
+  dob: z.string().optional(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+});
+
+export const addToSystemSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  middleName: z.string().optional(),
+  ssnLast4: z.string().length(4).optional(),
+  dob: z.string().optional(),
+  gender: z.string().optional(),
+  bankClientId: z.string().uuid(),
+  accountNumber: z.string().min(1),
+  balance: z.coerce.number().optional().default(0),
+  addresses: z.array(z.string()).optional(),
+  phones: z.array(z.string()).optional(),
+  emails: z.array(z.string()).optional(),
+});
