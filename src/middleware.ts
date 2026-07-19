@@ -1,23 +1,30 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const session = req.auth;
-  const isLoggedIn = !!session;
-  const role = (session?.user as unknown as { role: string })?.role ?? "";
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+    cookieName: "authjs.session-token",
+  });
+
+  const isLoggedIn = !!token;
+  const role = (token?.role as string) ?? "";
 
   // Public routes
   if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname === "/api/health") {
     if (isLoggedIn && pathname === "/login") {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
     return NextResponse.next();
   }
 
   // Protected routes
   if (!isLoggedIn) {
-    const loginUrl = new URL("/login", req.url);
+    const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -40,11 +47,11 @@ export default auth((req) => {
 
   // App route protection
   if (pathname.startsWith("/admin") && role !== "system_admin") {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
