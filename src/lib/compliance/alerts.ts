@@ -40,5 +40,5 @@ export async function sendAlert(payload: AlertPayload): Promise<void> {
 export async function sendComplianceAlert(flagType: string, debtorName: string, accountNumber: string): Promise<void> {
   const subject = `[COMPLIANCE] ${flagType.toUpperCase()} Flag — ${debtorName}`;
   const text = `A compliance flag has been triggered:\n\nType: ${flagType}\nDebtor: ${debtorName}\nAccount: ${accountNumber}\n\nPlease review and take appropriate action.`;
-  await sendAlert({ to: "compliance@skiptracepro.com", subject, text });
+  await sendAlert({ to: env.complianceAlertEmail ?? "compliance@skiptracepro.com", subject, text });
 }

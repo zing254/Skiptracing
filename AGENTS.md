@@ -27,7 +27,7 @@ Verification order: `typecheck -> lint -> build` (no tests exist).
 ## Required Env Vars (checked at module load in `src/lib/env.ts`)
 ```
 DATABASE_URL=postgresql://osint:osint@127.0.0.1:5432/osint
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:3020
 NEXTAUTH_SECRET=dev-secret-do-not-use-in-production
 ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 ```
@@ -35,7 +35,7 @@ Missing any of these crashes the build. SMTP and provider API keys are optional.
 
 ## Auth
 - NextAuth credentials provider in `src/lib/auth.ts`; handler at `src/app/api/auth/[...nextauth]/route.ts`
-- Proxy at `src/proxy.ts` — protects all routes except `/login` and `/api/auth`
+- Middleware at `src/middleware.ts` — protects all routes except `/login` and `/api/auth`
 - Session: JWT strategy, user `role` stored in token
 - RBAC helpers in `src/lib/rbac.ts` — use `getSessionUser()`, `canRunTraces()`, etc.
 - Login: `/login` with `useSearchParams` — wrapped in Suspense boundary
@@ -52,7 +52,7 @@ Missing any of these crashes the build. SMTP and provider API keys are optional.
 - **Validation**: `src/lib/validation.ts` — Zod schemas
 - **Logging**: `src/lib/logger.ts` — structured JSON to stdout
 - **Config**: `drizzle.config.json` encodes the DB connection. `next.config.ts` is minimal.
-- Key API routes: `api/accounts/[id]/trace` (POST), `api/batch/[id]/stream` (GET, SSE)
+- Key API routes: `api/accounts/[id]/trace` (POST), `api/accounts/[id]/report` (GET), `api/accounts/export` (GET), `api/batch/[id]/stream` (GET, SSE)
 
 ## Conventions
 - `"use client"` on interactive components; Server Components by default

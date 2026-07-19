@@ -98,7 +98,20 @@ function BatchCard({ job, onRefresh }: { job: BatchJob; onRefresh: () => void })
 
         <div className="flex items-center gap-2 shrink-0">
           {job.status === "complete" && (
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 text-xs font-semibold transition-all">
+            <button
+              onClick={async () => {
+                const res = await fetch(`/api/accounts/export?status=all`);
+                if (!res.ok) return;
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `batch_${job.fileName ?? "export"}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 text-xs font-semibold transition-all"
+            >
               <Download className="w-3.5 h-3.5" />
               Export
             </button>
@@ -221,24 +234,22 @@ export default function BatchPage() {
   const submitBatch = async () => {
     setSubmitting(true);
     try {
-      // Use a hardcoded bankClientId and agentId from seed data for demo
       const usersRes = await fetch("/api/users");
       if (!usersRes.ok) throw new Error("Failed to fetch users");
       const usersData = await usersRes.json();
       const mgr = usersData.users.find((u: { role: string }) => u.role === "batch_manager");
 
-      // Get first bank client
       const acctRes = await fetch("/api/accounts?limit=1");
       if (!acctRes.ok) throw new Error("Failed to fetch accounts");
       const acctData = await acctRes.json();
-      const bankClientId = acctData.accounts?.[0]?.bankName ? undefined : undefined;
+      const bankClientId = acctData.accounts?.[0]?.bankClientId;
 
       await fetch("/api/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          bankClientId: "00000000-0000-0000-0000-000000000000",
-          submittedBy: mgr?.id ?? "00000000-0000-0000-0000-000000000000",
+          bankClientId,
+          submittedBy: mgr?.id,
           fileName: uploadFile || `batch_${Date.now()}.csv`,
           totalRecords: recordCount,
         }),

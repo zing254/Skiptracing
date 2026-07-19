@@ -417,7 +417,15 @@ export default function DashboardPage() {
                       <span>
                         {batch.processedRecords.toLocaleString()} / {batch.totalRecords.toLocaleString()} records
                       </span>
-                      <span className="text-blue-400">Processing</span>
+                      <span className={clsx(
+                        "font-semibold capitalize",
+                        batch.status === "processing" && "text-blue-400",
+                        batch.status === "complete" && "text-emerald-400",
+                        batch.status === "failed" && "text-red-400",
+                        batch.status === "queued" && "text-amber-400",
+                      )}>
+                        {batch.status}
+                      </span>
                     </div>
                   </div>
                 );

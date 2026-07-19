@@ -20,6 +20,7 @@ export const env = {
   smtpUser: optionalEnv("SMTP_USER"),
   smtpPass: optionalEnv("SMTP_PASS"),
   smtpFrom: optionalEnv("SMTP_FROM", "noreply@skiptracepro.com"),
+  complianceAlertEmail: optionalEnv("COMPLIANCE_ALERT_EMAIL"),
   lexisnexisApiKey: optionalEnv("LEXISNEXIS_API_KEY"),
   transunionClientId: optionalEnv("TRANSUNION_CLIENT_ID"),
   transunionClientSecret: optionalEnv("TRANSUNION_CLIENT_SECRET"),

@@ -22,6 +22,7 @@ import {
   Lock,
   ChevronDown,
   ChevronUp,
+  Download,
 } from "lucide-react";
 import { StatusBadge, FlagBadge, ConfidenceBadge } from "@/components/StatusBadge";
 import { clsx } from "clsx";
@@ -840,8 +841,25 @@ export default function AccountDetailPage({
                                 {person.address}
                               </div>
                             )}
-                          </div>
-                        </div>
+        </div>
+        <button
+          onClick={async () => {
+            const res = await fetch(`/api/accounts/${id}/report`);
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `case_report_${account.accountNumber}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-white/5 border border-white/10 text-slate-400 hover:text-white text-xs font-semibold transition-all"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Report
+        </button>
+      </div>
                         <div className="text-right">
                           {person.sourceProvider && (
                             <span className="text-[10px] text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">

@@ -40,7 +40,7 @@ export function canManageBatches(role: string): boolean {
 }
 
 export function canViewCompliance(role: string): boolean {
-  return hasRole(role, "compliance_officer") || role === "system_admin";
+  return hasRole(role, "compliance_officer");
 }
 
 export async function getSessionUser() {

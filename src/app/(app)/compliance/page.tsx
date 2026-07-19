@@ -89,6 +89,7 @@ export default function CompliancePage() {
   const [flags, setFlags] = useState<ComplianceFlag[]>([]);
   const [typeCounts, setTypeCounts] = useState<TypeCount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function CompliancePage() {
         setFlags(data.flags ?? []);
         setTypeCounts(data.typeCounts ?? []);
       })
-      .catch(() => {})
+      .catch(() => setError("Failed to load compliance data"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -220,7 +221,7 @@ export default function CompliancePage() {
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
           <h2 className="text-sm font-bold text-white">All Compliance Flags</h2>
           <div className="flex items-center gap-1">
-            {["all", "active", "bankruptcy", "deceased", "attorney_rep", "do_not_contact"].map((f) => (
+            {["all", "active", "bankruptcy", "deceased", "attorney_rep", "do_not_contact", "minor"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -241,6 +242,8 @@ export default function CompliancePage() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
           </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-400 text-sm">{error}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-slate-500 text-sm">
             No compliance flags found

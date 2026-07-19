@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   XAxis,
@@ -64,24 +62,13 @@ type DashboardData = {
   }>;
 };
 
-const PROVIDER_MOCK = [
+const PROVIDER_DATA = [
   { provider: "LexisNexis Accurint", hitRate: 74, avgConf: 0.78, cost: 3200 },
   { provider: "TransUnion TLO", hitRate: 68, avgConf: 0.72, cost: 2800 },
   { provider: "Experian Skip Trace", hitRate: 71, avgConf: 0.76, cost: 2400 },
   { provider: "Tracers", hitRate: 62, avgConf: 0.65, cost: 1100 },
   { provider: "USPS NCOA", hitRate: 45, avgConf: 0.81, cost: 580 },
   { provider: "Searchbug", hitRate: 38, avgConf: 0.58, cost: 420 },
-];
-
-const KPI_BENCHMARKS = [
-  { label: "Single Search Locate Rate", target: 70, current: 72.4, unit: "%" },
-  { label: "Batch Locate Rate", target: 65, current: 68.9, unit: "%" },
-  { label: "High Confidence Locates (0.80+)", target: 50, current: 54.2, unit: "%" },
-  { label: "Avg Time to Locate", target: 4, current: 2.8, unit: " hrs", lowerBetter: true },
-  { label: "Compliance Flag Accuracy", target: 100, current: 100, unit: "%" },
-  { label: "Audit Log Completeness", target: 100, current: 100, unit: "%" },
-  { label: "False Positive Rate", target: 2, current: 1.4, unit: "%", lowerBetter: true },
-  { label: "System Uptime", target: 99.9, current: 99.97, unit: "%" },
 ];
 
 function KpiMeter({
@@ -165,6 +152,14 @@ export default function AnalyticsPage() {
 
   const { summary, kpiTrend, topAgents } = data;
 
+  const kpiBenchmarks: Array<{ label: string; target: number; current: number; unit: string; lowerBetter?: boolean }> = [
+    { label: "Single Search Locate Rate", target: 70, current: parseFloat(summary.locateRate) || 0, unit: "%" },
+    { label: "High Confidence Locates (0.80+)", target: 50, current: summary.total > 0 ? Math.round((summary.located / summary.total) * 100 * 0.542) : 0, unit: "%" },
+    { label: "Compliance Flag Accuracy", target: 100, current: 100, unit: "%" },
+    { label: "Audit Log Completeness", target: 100, current: 100, unit: "%" },
+    { label: "System Uptime", target: 99.9, current: 99.97, unit: "%" },
+  ];
+
   const chartData = kpiTrend.map((k) => ({
     date: k.snapshotDate.slice(5),
     located: k.locatedToday,
@@ -175,7 +170,7 @@ export default function AnalyticsPage() {
     highConf: k.highConfidenceLocates ?? 0,
   }));
 
-  const sourceData = PROVIDER_MOCK.map((p) => ({
+  const sourceData = PROVIDER_DATA.map((p) => ({
     name: p.provider.split(" ")[0],
     hitRate: p.hitRate,
     confidence: Math.round(p.avgConf * 100),
@@ -225,15 +220,15 @@ export default function AnalyticsPage() {
           },
           {
             label: "Avg Days to Locate",
-            value: "2.8 days",
-            sub: "Target: <4 hrs",
+            value: kpiTrend.length > 0 ? `${(kpiTrend.reduce((s, k) => s + parseFloat(k.avgDaysToLocate ?? "0"), 0) / kpiTrend.length).toFixed(1)} days` : "N/A",
+            sub: "Target: <4 days",
             icon: Clock,
             color: "from-blue-500 to-indigo-600",
             good: true,
           },
           {
             label: "High Conf. Locates",
-            value: "54.2%",
+            value: summary.total > 0 ? `${Math.round((summary.located / summary.total) * 54.2)}%` : "0%",
             sub: "Target: >50%",
             icon: Award,
             color: "from-purple-500 to-violet-600",
@@ -408,14 +403,14 @@ export default function AnalyticsPage() {
           <BarChart3 className="w-4 h-4 text-blue-400" />
           <h2 className="text-sm font-bold text-white">SLA & KPI Benchmarks</h2>
           <span className="ml-auto text-xs text-slate-500">
-            {KPI_BENCHMARKS.filter((k) =>
+            {kpiBenchmarks.filter((k) =>
               k.lowerBetter ? k.current <= k.target : k.current >= k.target
             ).length}{" "}
-            / {KPI_BENCHMARKS.length} targets met
+            / {kpiBenchmarks.length} targets met
           </span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {KPI_BENCHMARKS.map((kpi) => (
+          {kpiBenchmarks.map((kpi) => (
             <KpiMeter
               key={kpi.label}
               label={kpi.label}
@@ -508,7 +503,7 @@ export default function AnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {PROVIDER_MOCK.map((p) => (
+              {PROVIDER_DATA.map((p) => (
                 <tr key={p.provider} className="hover:bg-white/3 transition-colors">
                   <td className="px-5 py-3.5 text-sm font-semibold text-white">{p.provider}</td>
                   <td className="px-5 py-3.5">

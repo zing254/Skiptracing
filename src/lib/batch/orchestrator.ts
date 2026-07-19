@@ -37,14 +37,6 @@ export async function processBatch(batchId: string): Promise<void> {
     .where(eq(accounts.bankClientId, job.bankClientId))
     .limit(job.totalRecords);
 
-  const queue = records.map((r, i) => ({ ...r, index: i }));
-  let processedRecords = 0;
-  const running: Promise<void>[] = [];
-
-  for (let i = 0; i < queue.length && running.length < CONCURRENCY; i++) {
-    running.push(processRecord(queue[i]));
-  }
-
   async function processRecord(record: typeof queue[number]): Promise<void> {
     const result = await engine.execute({
       firstName: record.firstName,
@@ -53,13 +45,10 @@ export async function processBatch(batchId: string): Promise<void> {
       dob: record.dob ?? undefined,
     });
 
-    processedRecords++;
-
     const locatedHigh = result.finalScore >= 0.8 ? 1 : 0;
     const locatedMed = result.finalScore >= 0.5 && result.finalScore < 0.8 ? 1 : 0;
     const notFound = result.finalScore < 0.2 ? 1 : 0;
 
-    // Use atomic SQL increments to avoid race conditions
     await db
       .update(batchJobs)
       .set({
@@ -71,6 +60,24 @@ export async function processBatch(batchId: string): Promise<void> {
       .where(eq(batchJobs.id, batchId));
   }
 
+  // Worker pool: maintain CONCURRENCY running tasks, start a new one each time one finishes
+  const queue = [...records];
+  const running: Set<Promise<void>> = new Set();
+
+  async function runNext(): Promise<void> {
+    if (queue.length === 0) return;
+    const record = queue.shift()!;
+    const task = processRecord(record).then(() => {
+      running.delete(task);
+    });
+    running.add(task);
+    if (running.size >= CONCURRENCY) {
+      await Promise.race(running);
+    }
+    await runNext();
+  }
+
+  await runNext();
   await Promise.all(running);
 
   await db
@@ -78,7 +85,6 @@ export async function processBatch(batchId: string): Promise<void> {
     .set({
       status: "complete",
       completedAt: new Date(),
-      processedRecords: records.length,
     })
     .where(eq(batchJobs.id, batchId));
 

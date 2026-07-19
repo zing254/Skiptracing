@@ -3,5 +3,6 @@
   "schema": "./src/db/schema.ts",
   "dbCredentials": {
     "url": "postgresql://osint:osint@127.0.0.1:5432/osint"
-  }
+  },
+  "out": "./drizzle"
 }

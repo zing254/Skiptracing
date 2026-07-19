@@ -28,11 +28,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`));
       };
 
+      const MAX_POLLS = 300; // 10 minutes at 2s intervals
+      let pollCount = 0;
+
       const poll = async () => {
-        if (signal.aborted) {
+        if (signal.aborted || pollCount >= MAX_POLLS) {
+          if (pollCount >= MAX_POLLS) {
+            send({ error: "Poll timeout exceeded", status: "failed" });
+          }
           controller.close();
           return;
         }
+
+        pollCount++;
 
         const [job] = await db.select().from(batchJobs).where(eq(batchJobs.id, id)).limit(1);
         if (!job) {
